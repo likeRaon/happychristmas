@@ -16,7 +16,7 @@ function createSnow() {
         
         // Random size for depth effect
         const size = Math.random() * 5 + 2; 
-        const pixelSize = Math.floor(size / 2) * 2; // Snap to even numbers for pixel look
+        const pixelSize = Math.floor(size / 2) * 2;
         snowflake.style.width = pixelSize + 'px';
         snowflake.style.height = pixelSize + 'px';
         
@@ -72,3 +72,4 @@ function decorateTree() {
         }
     });
 }
+
