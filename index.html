@@ -8,12 +8,53 @@
 </head>
 <body>
     <div class="container">
+        <!-- Canvas for interactive snow -->
+        <canvas id="snowCanvas"></canvas>
+
         <div class="moon"></div>
-        <h1 class="pixel-text">MERRY CHRISTMAS</h1>
+        
+        <!-- Flying Santa -->
+        <div class="santa-container">
+            <div class="reindeer r1"></div>
+            <div class="reindeer r2"></div>
+            <div class="sleigh">
+                <div class="santa"></div>
+            </div>
+        </div>
+
+        <h1 class="pixel-text">MERRY CHRISTMAS<br>말랑</h1>
         
         <div class="scene">
             
-            <div class="tree-container">
+            <div class="snowman-container dad-snowman" id="dadSnowman">
+                <div class="hat">
+                    <div class="hat-top"></div>
+                    <div class="hat-brim"></div>
+                </div>
+                <div class="snow-head">
+                    <div class="sunglasses">
+                        <div class="glass-l"></div>
+                        <div class="glass-r"></div>
+                        <div class="bridge"></div>
+                    </div>
+                    <div class="nose"></div>
+                    <div class="cigarette">
+                        <div class="smoke-particle s1"></div>
+                        <div class="smoke-particle s2"></div>
+                        <div class="smoke-particle s3"></div>
+                    </div> <!-- Cigarette -->
+                    <div class="mouth"></div>
+                </div>
+                <div class="scarf"></div>
+                <div class="snow-body">
+                    <div class="button b1"></div>
+                    <div class="button b2"></div>
+                </div>
+                <div class="arm-l"></div>
+                <div class="arm-r"></div>
+            </div>
+
+            <div class="tree-container" id="tree">
                 <div class="pixel-star"></div>
                 <div class="pixel-tree">
                     <div class="layer l1"></div>
@@ -28,7 +69,7 @@
                 </div>
             </div>
             
-            <div class="snowman-container">
+            <div class="snowman-container" id="snowman">
                 <div class="hat">
                     <div class="hat-top"></div>
                     <div class="hat-brim"></div>
@@ -39,11 +80,33 @@
                     <div class="nose"></div>
                     <div class="blush-l"></div>
                     <div class="blush-r"></div>
+                    <div class="mouth"></div>
                 </div>
                 <div class="scarf"></div>
                 <div class="snow-body">
                     <div class="button b1"></div>
                     <div class="button b2"></div>
+                </div>
+                <div class="arm-l"></div>
+                <div class="arm-r"></div>
+            </div>
+
+            <div class="snowman-container baby-snowman" id="babySnowman">
+                <div class="hat">
+                    <div class="hat-top"></div>
+                    <div class="hat-brim"></div>
+                </div>
+                <div class="snow-head">
+                    <div class="snow-eye-l"></div>
+                    <div class="snow-eye-r"></div>
+                    <div class="nose"></div>
+                    <div class="blush-l"></div>
+                    <div class="blush-r"></div>
+                    <div class="mouth"></div>
+                </div>
+                <div class="scarf"></div>
+                <div class="snow-body">
+                    <div class="button b1"></div>
                 </div>
                 <div class="arm-l"></div>
                 <div class="arm-r"></div>

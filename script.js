@@ -1,75 +1,268 @@
 document.addEventListener('DOMContentLoaded', () => {
-    createSnow();
+    initSnow();
     decorateTree();
+    setupInteractions();
 });
 
-function createSnow() {
-    const snowContainer = document.body;
+function initSnow() {
+    const canvas = document.getElementById('snowCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
 
-    // Create snowflakes continuously
-    setInterval(() => {
-        const snowflake = document.createElement('div');
-        snowflake.classList.add('snowflake');
-        
-        // Random horizontal position (0 to 100vw)
-        snowflake.style.left = Math.random() * 100 + 'vw';
-        
-        // Random size for depth effect
-        const size = Math.random() * 5 + 2; 
-        const pixelSize = Math.floor(size / 2) * 2;
-        snowflake.style.width = pixelSize + 'px';
-        snowflake.style.height = pixelSize + 'px';
-        
-        // Random opacity
-        snowflake.style.opacity = Math.random() * 0.6 + 0.4;
+    const snowflakes = [];
+    const maxSnowflakes = 1200; // Increased snow amount
+    
+    // Mouse tracking
+    let mouse = { x: -100, y: -100 };
+    let lastMouse = { x: -100, y: -100 };
+    
+    document.addEventListener('mousemove', (e) => {
+        lastMouse.x = mouse.x;
+        lastMouse.y = mouse.y;
+        mouse.x = e.clientX;
+        mouse.y = e.clientY;
+    });
 
-        // Random animation duration (fall speed)
-        const duration = Math.random() * 5 + 3; // 3s to 8s
-        snowflake.style.animationDuration = duration + 's';
-        
-        snowContainer.appendChild(snowflake);
+    // Resize handler
+    window.addEventListener('resize', () => {
+        width = window.innerWidth;
+        height = window.innerHeight;
+        canvas.width = width;
+        canvas.height = height;
+    });
 
-        // Remove snowflake after animation
-        setTimeout(() => {
-            snowflake.remove();
-        }, duration * 1000);
-    }, 50); // Generate every 50ms
+    class Snowflake {
+        constructor() {
+            this.reset();
+            this.y = Math.random() * height;
+        }
+
+        reset() {
+            this.x = Math.random() * width;
+            this.y = -10;
+            this.size = Math.floor(Math.random() * 3 + 2); 
+            this.size = this.size - (this.size % 2); 
+            if (this.size < 2) this.size = 2;
+            
+            // Slower speed
+            this.speed = Math.random() * 1.5 + 0.5; 
+            this.velX = Math.random() * 1 - 0.5; 
+            this.opacity = Math.random() * 0.5 + 0.5;
+            
+            this.resting = false; 
+        }
+
+        update() {
+            // Umbrella Physics
+            // Handle is at mouse.y, Stick goes UP to canopy.
+            // Canopy Center is ~50px above mouse.y
+            const stickHeight = 50;
+            const radius = 50; 
+            const umbrellaCenterY = mouse.y - stickHeight; 
+
+            if (this.resting) {
+                const mouseDist = Math.abs(mouse.x - lastMouse.x) + Math.abs(mouse.y - lastMouse.y);
+                if (mouseDist > 5) {
+                    this.resting = false;
+                    this.speed = Math.random() * 1.5 + 0.5;
+                    return;
+                }
+
+                const dx = this.x - mouse.x;
+                
+                // Slide logic
+                const slideFactor = 0.05;
+                if (dx > 0) this.x += Math.abs(dx) * slideFactor;
+                else this.x -= Math.abs(dx) * slideFactor;
+
+                const newDx = this.x - mouse.x;
+                
+                // Check if fell off umbrella
+                if (Math.abs(newDx) >= radius) {
+                    this.resting = false;
+                    this.speed = Math.random() * 1.5 + 0.5;
+                } else {
+                    // Stick to surface
+                    this.y = umbrellaCenterY - Math.sqrt(radius*radius - newDx*newDx);
+                }
+            } else {
+                this.y += this.speed;
+                this.x += this.velX;
+
+                // Collision detection
+                const dx = this.x - mouse.x;
+                const dy = this.y - umbrellaCenterY;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+
+                // Check if hit the umbrella surface (top half)
+                // Since umbrellaCenterY is above mouse, valid hits are ABOVE that center?
+                // Visual is a dome (Top Half). y coords of dome are < umbrellaCenterY.
+                if (dist < radius && this.y < umbrellaCenterY) {
+                    this.resting = true;
+                    this.y = umbrellaCenterY - Math.sqrt(radius*radius - dx*dx);
+                    this.speed = 0;
+                    this.velX = 0;
+                }
+            }
+            
+            if (this.y > height) {
+                this.reset();
+            }
+            if (this.x > width) this.x = 0;
+            if (this.x < 0) this.x = width;
+        }
+
+        draw() {
+            ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+            ctx.fillRect(Math.floor(this.x), Math.floor(this.y), this.size, this.size);
+        }
+    }
+
+    for (let i = 0; i < maxSnowflakes; i++) {
+        snowflakes.push(new Snowflake());
+    }
+
+    function animate() {
+        ctx.clearRect(0, 0, width, height);
+        
+        // Draw Umbrella Visual
+        if (mouse.x > -50) { 
+            const stickHeight = 50;
+            const radius = 50;
+            const umbrellaCenterY = mouse.y - stickHeight;
+
+            // Draw Handle (Stick)
+            ctx.beginPath();
+            // Start at mouse (handle grip)
+            ctx.moveTo(mouse.x, mouse.y); 
+            // Go up to canopy center
+            ctx.lineTo(mouse.x, umbrellaCenterY);
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#ecf0f1';
+            ctx.stroke();
+
+            // Draw Canopy (Dome)
+            ctx.beginPath();
+            // Arc from PI (left) to 2PI (right) -> Top Half
+            ctx.arc(mouse.x, umbrellaCenterY, radius, Math.PI, 2 * Math.PI);
+            ctx.fillStyle = '#e74c3c';
+            ctx.fill();
+            
+            ctx.lineWidth = 1;
+        }
+
+        snowflakes.forEach(flake => {
+            flake.update();
+            flake.draw();
+        });
+
+        requestAnimationFrame(animate);
+    }
+    
+    animate();
 }
 
 function decorateTree() {
-    const layers = document.querySelectorAll('.layer');
-    const colors = ['#ff0000', '#ffff00', '#00ffff', '#ff00ff', '#ffffff', '#ff8800'];
+    const layers = document.querySelectorAll('#tree .layer');
+    const colors = ['#ff0000', '#ffff00', '#00ffff', '#ff00ff', '#ffffff', '#ff9900'];
 
     layers.forEach(layer => {
-        // Add random lights to each layer
-        const numLights = Math.floor(Math.random() * 4) + 3; // 3 to 6 lights
+        const numLights = Math.floor(Math.random() * 4) + 5; 
 
         for (let i = 0; i < numLights; i++) {
             const light = document.createElement('div');
             light.classList.add('light');
             
-            // Random color
             const color = colors[Math.floor(Math.random() * colors.length)];
             light.style.backgroundColor = color;
-            light.style.color = color; // Used for box-shadow currentColor
+            light.style.color = color;
             
-            // Random position within the layer
             const layerWidth = layer.offsetWidth;
             const layerHeight = layer.offsetHeight;
             
-            // Keep lights somewhat inside borders
             const x = Math.random() * (layerWidth - 12) + 4;
             const y = Math.random() * (layerHeight - 12) + 4;
             
             light.style.left = x + 'px';
             light.style.top = y + 'px';
             
-            // Random animation settings
-            light.style.animationDelay = Math.random() * 2 + 's';
-            light.style.animationDuration = (Math.random() * 1.5 + 0.5) + 's'; 
+            light.animate([
+                { opacity: 0.4 },
+                { opacity: 1, boxShadow: `0 0 5px ${color}` }
+            ], {
+                duration: Math.random() * 1000 + 500,
+                iterations: Infinity,
+                direction: 'alternate',
+                delay: Math.random() * 1000
+            });
             
             layer.appendChild(light);
         }
     });
 }
 
+function setupInteractions() {
+    const tree = document.getElementById('tree');
+    const snowman = document.getElementById('snowman');
+    const dadSnowman = document.getElementById('dadSnowman');
+    const babySnowman = document.getElementById('babySnowman');
+    const santaContainer = document.querySelector('.santa-container');
+
+    tree.addEventListener('click', () => {
+        const lights = document.querySelectorAll('.light');
+        const colors = ['#ff0000', '#ffff00', '#00ffff', '#ff00ff', '#ffffff', '#ff9900', '#00ff00'];
+        
+        lights.forEach(light => {
+            const newColor = colors[Math.floor(Math.random() * colors.length)];
+            light.style.backgroundColor = newColor;
+            light.style.color = newColor;
+            light.style.boxShadow = `0 0 5px ${newColor}`;
+        });
+    });
+
+    const jumpAnimation = [
+        { transform: 'translateY(0) rotate(5deg)' },
+        { transform: 'translateY(-20px) rotate(-5deg)', offset: 0.5 },
+        { transform: 'translateY(0) rotate(5deg)' }
+    ];
+    
+    snowman.addEventListener('click', () => {
+        snowman.animate(jumpAnimation, { duration: 500, easing: 'ease-out' });
+    });
+
+    if (dadSnowman) {
+        dadSnowman.addEventListener('click', () => {
+            dadSnowman.animate(jumpAnimation, { duration: 500, easing: 'ease-out' });
+        });
+    }
+
+    if (babySnowman) {
+        babySnowman.addEventListener('click', () => {
+            babySnowman.animate([
+                { transform: 'scale(0.6) translateY(0) rotate(5deg)' },
+                { transform: 'scale(0.6) translateY(-20px) rotate(-5deg)', offset: 0.5 },
+                { transform: 'scale(0.6) translateY(0) rotate(5deg)' }
+            ], { duration: 500, easing: 'ease-out' });
+        });
+    }
+
+    santaContainer.addEventListener('click', () => {
+        const gift = document.createElement('div');
+        gift.classList.add('falling-gift');
+        
+        const rect = santaContainer.getBoundingClientRect();
+        
+        gift.style.left = (rect.left + rect.width / 2) + 'px';
+        gift.style.top = (rect.top + rect.height / 2) + 'px';
+        
+        document.body.appendChild(gift);
+        
+        gift.addEventListener('animationend', () => {
+            gift.remove();
+        });
+    });
+}
