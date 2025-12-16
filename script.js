@@ -14,9 +14,9 @@ function initSnow() {
     canvas.height = height;
 
     const snowflakes = [];
-    const maxSnowflakes = 1200; // Increased snow amount
+    const maxSnowflakes = 1200; // 눈 내리는 양 조절 시 사용
     
-    // Mouse tracking
+    // 마우스 좌표 트래킹
     let mouse = { x: -100, y: -100 };
     let lastMouse = { x: -100, y: -100 };
     
@@ -48,7 +48,6 @@ function initSnow() {
             this.size = this.size - (this.size % 2); 
             if (this.size < 2) this.size = 2;
             
-            // Slower speed
             this.speed = Math.random() * 1.5 + 0.5; 
             this.velX = Math.random() * 1 - 0.5; 
             this.opacity = Math.random() * 0.5 + 0.5;
@@ -57,9 +56,7 @@ function initSnow() {
         }
 
         update() {
-            // Umbrella Physics
-            // Handle is at mouse.y, Stick goes UP to canopy.
-            // Canopy Center is ~50px above mouse.y
+            // 우산 상단 눈 쌓이는 기능
             const stickHeight = 50;
             const radius = 50; 
             const umbrellaCenterY = mouse.y - stickHeight; 
@@ -81,26 +78,21 @@ function initSnow() {
 
                 const newDx = this.x - mouse.x;
                 
-                // Check if fell off umbrella
                 if (Math.abs(newDx) >= radius) {
                     this.resting = false;
                     this.speed = Math.random() * 1.5 + 0.5;
                 } else {
-                    // Stick to surface
                     this.y = umbrellaCenterY - Math.sqrt(radius*radius - newDx*newDx);
                 }
             } else {
                 this.y += this.speed;
                 this.x += this.velX;
 
-                // Collision detection
                 const dx = this.x - mouse.x;
                 const dy = this.y - umbrellaCenterY;
                 const dist = Math.sqrt(dx*dx + dy*dy);
 
-                // Check if hit the umbrella surface (top half)
-                // Since umbrellaCenterY is above mouse, valid hits are ABOVE that center?
-                // Visual is a dome (Top Half). y coords of dome are < umbrellaCenterY.
+
                 if (dist < radius && this.y < umbrellaCenterY) {
                     this.resting = true;
                     this.y = umbrellaCenterY - Math.sqrt(radius*radius - dx*dx);
@@ -129,25 +121,19 @@ function initSnow() {
     function animate() {
         ctx.clearRect(0, 0, width, height);
         
-        // Draw Umbrella Visual
         if (mouse.x > -50) { 
             const stickHeight = 50;
             const radius = 50;
             const umbrellaCenterY = mouse.y - stickHeight;
 
-            // Draw Handle (Stick)
             ctx.beginPath();
-            // Start at mouse (handle grip)
             ctx.moveTo(mouse.x, mouse.y); 
-            // Go up to canopy center
             ctx.lineTo(mouse.x, umbrellaCenterY);
             ctx.lineWidth = 3;
             ctx.strokeStyle = '#ecf0f1';
             ctx.stroke();
 
-            // Draw Canopy (Dome)
             ctx.beginPath();
-            // Arc from PI (left) to 2PI (right) -> Top Half
             ctx.arc(mouse.x, umbrellaCenterY, radius, Math.PI, 2 * Math.PI);
             ctx.fillStyle = '#e74c3c';
             ctx.fill();

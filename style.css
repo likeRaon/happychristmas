@@ -40,7 +40,6 @@ body {
     justify-content: center;
 }
 
-/* Canvas for Snow */
 #snowCanvas {
     position: absolute;
     top: 0;
@@ -51,7 +50,6 @@ body {
     pointer-events: none;
 }
 
-/* Background Elements */
 .moon {
     position: absolute;
     top: 50px;
@@ -95,7 +93,6 @@ body {
     user-select: none;
 }
 
-/* Flying Santa */
 .santa-container {
     position: absolute;
     top: 15%;
@@ -104,7 +101,7 @@ body {
     align-items: flex-end;
     gap: 10px;
     animation: flySanta 15s linear infinite;
-    z-index: 200; /* Ensure on top for clicking */
+    z-index: 200; 
     transform: scale(0.8);
     cursor: pointer;
 }
@@ -194,16 +191,15 @@ body {
 .scene {
     position: relative;
     width: 100%;
-    max-width: 900px; /* Increased to fit new snowmen */
+    max-width: 900px;
     height: 500px;
     display: flex;
     justify-content: center;
     align-items: flex-end;
     z-index: 5;
-    gap: 30px; /* Space between elements */
+    gap: 30px; 
 }
 
-/* Ground */
 .ground {
     position: absolute;
     bottom: 0;
@@ -215,7 +211,6 @@ body {
     transform: translateX(-50%);
 }
 
-/* Tree Section */
 .tree-container {
     position: relative;
     display: flex;
@@ -271,7 +266,6 @@ body {
     z-index: 0;
 }
 
-/* Presents */
 .presents {
     position: absolute;
     bottom: 0;
@@ -294,7 +288,6 @@ body {
 .p2 { right: -20px; width: 60px; height: 40px; background-color: #3498db; }
 .p2::after, .p2::before { background-color: #ecf0f1; }
 
-/* Snowman Section */
 .snowman-container {
     position: relative;
     z-index: 11;
@@ -310,7 +303,6 @@ body {
     transform: rotate(5deg);
 }
 
-/* Baby Snowman */
 .baby-snowman {
     transform: scale(0.6);
     transform-origin: bottom center;
@@ -319,7 +311,6 @@ body {
     transform: scale(0.65) rotate(5deg);
 }
 
-/* Dad Snowman Sunglasses & Cigarette */
 .sunglasses {
     position: absolute;
     top: 15px;
@@ -368,7 +359,7 @@ body {
 }
 
 
-/* Hat */
+/* 모자 */
 .hat { position: relative; z-index: 10; top: 5px; }
 .hat-top { width: 30px; height: 25px; background-color: #2c3e50; margin: 0 auto; }
 .hat-brim { width: 50px; height: 8px; background-color: #2c3e50; border-bottom: 2px solid #c0392b; }
@@ -381,7 +372,7 @@ body {
     width: 70px; height: 70px; background-color: white; box-shadow: inset -4px -4px 0 #bdc3c7; position: relative; z-index: 4; display: flex; flex-direction: column; align-items: center; padding-top: 15px;
 }
 
-/* Face Details */
+/* 얼굴 디테일 */
 .snow-eye-l, .snow-eye-r { width: 6px; height: 6px; background-color: black; position: absolute; top: 15px; }
 .snow-eye-l { left: 10px; }
 .snow-eye-r { right: 10px; }
@@ -412,19 +403,16 @@ body {
     opacity: 1;
 }
 
-/* Scarf */
+/* 목도리 */
 .scarf { width: 60px; height: 12px; background-color: #c0392b; position: relative; z-index: 6; box-shadow: 2px 2px 0 rgba(0,0,0,0.2); }
 .scarf::after { content: ''; position: absolute; right: 5px; top: 12px; width: 12px; height: 25px; background-color: #c0392b; }
 
-/* Buttons */
 .button { width: 6px; height: 6px; background-color: #2c3e50; margin-bottom: 10px; }
 
-/* Arms */
 .arm-l, .arm-r { position: absolute; top: 90px; width: 40px; height: 4px; background-color: #795548; }
 .arm-l { left: -30px; transform: rotate(20deg); transform-origin: right center; animation: wave 2s infinite ease-in-out; }
 .arm-r { right: -30px; transform: rotate(-20deg); transform-origin: left center; }
 
-/* Falling Gift */
 .falling-gift {
     position: absolute;
     width: 20px;
@@ -439,7 +427,6 @@ body {
 }
 
 
-/* Animations */
 @keyframes glow {
     from { text-shadow: 0 0 5px #fff, 0 0 10px #ff00de, 0 0 15px #ff00de; }
     to { text-shadow: 0 0 10px #fff, 0 0 20px #ff00de, 0 0 30px #ff00de; }
@@ -479,14 +466,14 @@ body {
     transition: background-color 0.3s, box-shadow 0.3s;
 }
 
-/* Smoke Animation */
+/* 담배 */
 .smoke-particle {
     position: absolute;
     width: 6px;
     height: 6px;
     background-color: rgba(200, 200, 200, 0.8);
     border-radius: 50%;
-    left: 15px; /* End of cigarette */
+    left: 15px; 
     top: -2px;
     opacity: 0;
     pointer-events: none;
@@ -501,7 +488,6 @@ body {
     100% { transform: translateY(-20px) translateX(-10px) scale(2); opacity: 0; }
 }
 
-/* Responsiveness */
 @media (max-width: 600px) {
     .scene { transform: scale(0.5); bottom: -50px; }
     .tree-container { margin-right: 0; margin-bottom: 20px; }
