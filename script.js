@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("Merry Christmas! v3 Initializing..."); // 버전 확인용 로그
+    console.log("Merry Christmas! v4 Initializing..."); 
     initScene(); 
     decorateTree();
     setupInteractions();
@@ -43,7 +43,10 @@ function initScene() {
     });
 
     // Keyboard Fireworks
-    document.addEventListener('keydown', (e) => {
+    window.addEventListener('keydown', (e) => {
+        // 디버깅용 로그: 어떤 키가 눌렸는지 확인
+        console.log('Keydown:', e.code, e.key);
+
         // 한글 입력 중일 때도 작동하도록 e.code 사용 (KeyA, KeyB...)
         if (e.code.startsWith('Key')) {
             const char = e.code.slice(3); // "KeyA" -> "A"
@@ -215,7 +218,7 @@ function initScene() {
             ctx.save();
             ctx.globalAlpha = this.alpha;
             ctx.fillStyle = '#fff'; // White center
-            ctx.font = `${this.size}px 'Press Start 2P'`;
+            ctx.font = `${this.size}px 'Press Start 2P', sans-serif`; // Fallback font added
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             
