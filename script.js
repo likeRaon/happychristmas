@@ -1,10 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
     console.log("Merry Christmas! v5 Initializing..."); 
     
-    // 강제로 윈도우에 포커스 주기
     window.focus();
     
-    // 혹시 모를 클릭 시 포커스 보장
     document.body.addEventListener('click', () => {
         window.focus();
     });
@@ -21,11 +19,6 @@ let snowMode = 'snow'; // 'snow' | 'heart'
 // --- Classes (전역 스코프로 이동) ---
 class Snowflake {
     constructor(width, height) {
-        // 너비와 높이를 인스턴스 변수로 저장하거나 reset에서 처리하도록 수정
-        // 하지만 여기서는 initScene에서 전역 width/height를 쓰지 못하므로
-        // 생성자에서 받거나, reset 호출 시 컨텍스트를 고려해야 함.
-        // 가장 안전한 방법: initScene 내부에서 width/height를 참조하는 것이 아니라
-        // 윈도우 객체나 캔버스 객체를 통해 최신 값을 가져오도록 함.
         this.reset();
     }
 
@@ -474,3 +467,4 @@ function setupEasterEggs() {
         }
     });
 }
+
