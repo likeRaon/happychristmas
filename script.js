@@ -1,10 +1,15 @@
 document.addEventListener('DOMContentLoaded', () => {
-    initSnow();
+    console.log("Merry Christmas! Initializing...");
+    initScene(); 
     decorateTree();
     setupInteractions();
+    setupEasterEggs();
+    setupParallax(); 
 });
 
-function initSnow() {
+let snowMode = 'snow'; // 'snow' | 'heart'
+
+function initScene() {
     const canvas = document.getElementById('snowCanvas');
     const ctx = canvas.getContext('2d');
     
@@ -13,10 +18,15 @@ function initSnow() {
     canvas.width = width;
     canvas.height = height;
 
+    // --- Snow System ---
     const snowflakes = [];
-    const maxSnowflakes = 1200; // 눈 내리는 양 조절 시 사용
+    const maxSnowflakes = 1200; 
     
-    // 마우스 좌표 트래킹
+    // --- Firework System ---
+    let particles = [];
+    let textFireworks = []; // Store text particles
+
+    // Mouse tracking
     let mouse = { x: -100, y: -100 };
     let lastMouse = { x: -100, y: -100 };
     
@@ -27,6 +37,37 @@ function initSnow() {
         mouse.y = e.clientY;
     });
 
+    // Click for Fireworks
+    document.addEventListener('click', (e) => {
+        createFirework(e.clientX, e.clientY);
+    });
+
+    // Keyboard Fireworks
+    document.addEventListener('keydown', (e) => {
+        // Check if key is a single letter (a-z, A-Z)
+        if (/^[a-zA-Z]$/.test(e.key)) {
+            // Random position in the sky (top 70%)
+            const x = Math.random() * (width - 100) + 50;
+            const y = Math.random() * (height * 0.7) + 50;
+            
+            const color = `hsl(${Math.random() * 360}, 100%, 70%)`;
+            
+            // Create Explosion
+            createFirework(x, y, color);
+            
+            // Create Text
+            textFireworks.push(new TextFirework(x, y, e.key, color));
+        }
+    });
+
+    function createFirework(x, y, color = null) {
+        const finalColor = color || `hsl(${Math.random() * 360}, 50%, 50%)`;
+        const particleCount = 30;
+        for (let i = 0; i < particleCount; i++) {
+            particles.push(new Particle(x, y, finalColor));
+        }
+    }
+
     // Resize handler
     window.addEventListener('resize', () => {
         width = window.innerWidth;
@@ -34,6 +75,8 @@ function initSnow() {
         canvas.width = width;
         canvas.height = height;
     });
+
+    // --- Classes ---
 
     class Snowflake {
         constructor() {
@@ -56,7 +99,6 @@ function initSnow() {
         }
 
         update() {
-            // 우산 상단 눈 쌓이는 기능
             const stickHeight = 50;
             const radius = 50; 
             const umbrellaCenterY = mouse.y - stickHeight; 
@@ -71,7 +113,6 @@ function initSnow() {
 
                 const dx = this.x - mouse.x;
                 
-                // Slide logic
                 const slideFactor = 0.05;
                 if (dx > 0) this.x += Math.abs(dx) * slideFactor;
                 else this.x -= Math.abs(dx) * slideFactor;
@@ -92,7 +133,6 @@ function initSnow() {
                 const dy = this.y - umbrellaCenterY;
                 const dist = Math.sqrt(dx*dx + dy*dy);
 
-
                 if (dist < radius && this.y < umbrellaCenterY) {
                     this.resting = true;
                     this.y = umbrellaCenterY - Math.sqrt(radius*radius - dx*dx);
@@ -110,17 +150,94 @@ function initSnow() {
 
         draw() {
             ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
-            ctx.fillRect(Math.floor(this.x), Math.floor(this.y), this.size, this.size);
+            
+            if (snowMode === 'heart') {
+                ctx.font = `${this.size * 3}px serif`; 
+                ctx.fillText('❤', this.x, this.y);
+            } else {
+                ctx.fillRect(Math.floor(this.x), Math.floor(this.y), this.size, this.size);
+            }
         }
     }
 
+    class Particle {
+        constructor(x, y, color) {
+            this.x = x;
+            this.y = y;
+            this.color = color;
+            const angle = Math.random() * Math.PI * 2;
+            const velocity = Math.random() * 4 + 1; 
+            this.dx = Math.cos(angle) * velocity;
+            this.dy = Math.sin(angle) * velocity;
+            this.life = 100;
+            this.decay = Math.random() * 0.03 + 0.015;
+            this.gravity = 0.1;
+        }
+
+        update() {
+            this.x += this.dx;
+            this.y += this.dy;
+            this.dy += this.gravity; 
+            this.life -= 2;
+            this.alpha = this.life / 100;
+        }
+
+        draw() {
+            ctx.save();
+            ctx.globalAlpha = this.alpha;
+            ctx.fillStyle = this.color;
+            ctx.fillRect(this.x, this.y, 4, 4);
+            ctx.restore();
+        }
+    }
+
+    class TextFirework {
+        constructor(x, y, text, color) {
+            this.x = x;
+            this.y = y;
+            this.text = text;
+            this.color = color;
+            this.life = 100;
+            this.alpha = 1;
+            this.size = 30; // Initial size
+        }
+
+        update() {
+            this.y -= 0.5; // Slowly float up
+            this.life -= 1.5;
+            this.alpha = Math.max(0, this.life / 100);
+            this.size += 0.5; // Grow
+        }
+
+        draw() {
+            ctx.save();
+            ctx.globalAlpha = this.alpha;
+            ctx.fillStyle = '#fff'; // White center
+            ctx.font = `${this.size}px 'Press Start 2P'`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Glow effect with the main color
+            ctx.shadowColor = this.color;
+            ctx.shadowBlur = 20;
+            ctx.fillText(this.text, this.x, this.y);
+            
+            // Draw again to make it brighter
+            ctx.fillText(this.text, this.x, this.y);
+            ctx.restore();
+        }
+    }
+
+    // Initialize Snowflakes
     for (let i = 0; i < maxSnowflakes; i++) {
         snowflakes.push(new Snowflake());
     }
 
+    // --- Animation Loop ---
     function animate() {
         ctx.clearRect(0, 0, width, height);
         
+        // 1. Draw Umbrella
         if (mouse.x > -50) { 
             const stickHeight = 50;
             const radius = 50;
@@ -141,15 +258,51 @@ function initSnow() {
             ctx.lineWidth = 1;
         }
 
+        // 2. Update & Draw Snow
         snowflakes.forEach(flake => {
             flake.update();
             flake.draw();
         });
 
+        // 3. Update & Draw Fireworks
+        for (let i = particles.length - 1; i >= 0; i--) {
+            particles[i].update();
+            particles[i].draw();
+            if (particles[i].life <= 0) {
+                particles.splice(i, 1);
+            }
+        }
+
+        // 4. Update & Draw Text Fireworks
+        for (let i = textFireworks.length - 1; i >= 0; i--) {
+            textFireworks[i].update();
+            textFireworks[i].draw();
+            if (textFireworks[i].life <= 0) {
+                textFireworks.splice(i, 1);
+            }
+        }
+
         requestAnimationFrame(animate);
     }
     
     animate();
+}
+
+function setupParallax() {
+    const scene = document.querySelector('.scene');
+    const moon = document.querySelector('.moon');
+    const santa = document.querySelector('.santa-container');
+    const text = document.querySelector('.pixel-text');
+
+    document.addEventListener('mousemove', (e) => {
+        const x = (window.innerWidth / 2 - e.clientX) / 50;
+        const y = (window.innerHeight / 2 - e.clientY) / 50;
+
+        scene.style.transform = `translateX(${x}px) translateY(${y}px)`;
+        moon.style.transform = `translateX(${x * 0.5}px) translateY(${y * 0.5}px) scale(1.05)`; 
+        santa.style.transform = `translateX(${-x * 2}px) translateY(${-y * 2}px) scale(0.8)`;
+        text.style.transform = `translateX(${x * 1.5}px) translateY(${y * 1.5}px)`;
+    });
 }
 
 function decorateTree() {
@@ -197,8 +350,11 @@ function setupInteractions() {
     const dadSnowman = document.getElementById('dadSnowman');
     const babySnowman = document.getElementById('babySnowman');
     const santaContainer = document.querySelector('.santa-container');
+    const presents = document.querySelectorAll('.present');
+    const mainText = document.querySelector('.pixel-text');
 
-    tree.addEventListener('click', () => {
+    tree.addEventListener('click', (e) => {
+        e.stopPropagation(); 
         const lights = document.querySelectorAll('.light');
         const colors = ['#ff0000', '#ffff00', '#00ffff', '#ff00ff', '#ffffff', '#ff9900', '#00ff00'];
         
@@ -216,18 +372,21 @@ function setupInteractions() {
         { transform: 'translateY(0) rotate(5deg)' }
     ];
     
-    snowman.addEventListener('click', () => {
+    snowman.addEventListener('click', (e) => {
+        e.stopPropagation();
         snowman.animate(jumpAnimation, { duration: 500, easing: 'ease-out' });
     });
 
     if (dadSnowman) {
-        dadSnowman.addEventListener('click', () => {
+        dadSnowman.addEventListener('click', (e) => {
+            e.stopPropagation();
             dadSnowman.animate(jumpAnimation, { duration: 500, easing: 'ease-out' });
         });
     }
 
     if (babySnowman) {
-        babySnowman.addEventListener('click', () => {
+        babySnowman.addEventListener('click', (e) => {
+            e.stopPropagation();
             babySnowman.animate([
                 { transform: 'scale(0.6) translateY(0) rotate(5deg)' },
                 { transform: 'scale(0.6) translateY(-20px) rotate(-5deg)', offset: 0.5 },
@@ -236,7 +395,8 @@ function setupInteractions() {
         });
     }
 
-    santaContainer.addEventListener('click', () => {
+    santaContainer.addEventListener('click', (e) => {
+        e.stopPropagation();
         const gift = document.createElement('div');
         gift.classList.add('falling-gift');
         
@@ -250,5 +410,92 @@ function setupInteractions() {
         gift.addEventListener('animationend', () => {
             gift.remove();
         });
+    });
+
+    // 1. Presents Surprise
+    const gifts = ['🧸', '🎮', '🍬', '📱', '💍', '🧦', '💵', '🍕'];
+    presents.forEach(present => {
+        present.addEventListener('click', (e) => {
+            e.stopPropagation(); 
+            
+            // Shake effect
+            present.animate([
+                { transform: 'rotate(0)' },
+                { transform: 'rotate(-5deg)' },
+                { transform: 'rotate(5deg)' },
+                { transform: 'rotate(0)' }
+            ], { duration: 300 });
+
+            // Pop emoji
+            const emoji = document.createElement('div');
+            emoji.classList.add('emoji-pop');
+            emoji.textContent = gifts[Math.floor(Math.random() * gifts.length)];
+            
+            // Position above present
+            const rect = present.getBoundingClientRect();
+            emoji.style.left = (rect.left + rect.width/2 - 10) + 'px';
+            emoji.style.top = rect.top + 'px';
+            
+            document.body.appendChild(emoji);
+            
+            emoji.addEventListener('animationend', () => emoji.remove());
+        });
+    });
+
+    // 3. Text Interaction (Santa's Reply)
+    mainText.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // Remove existing bubble if any
+        const existingBubble = document.querySelector('.speech-bubble');
+        if (existingBubble) existingBubble.remove();
+
+        const replies = [
+            "루돌프가 파업해서 힘들구나 :(",
+            "루돌프 노조 씹새끼들...",
+            "사실 산타는 없단다.",
+            "울면 한대..",
+            "메리 크리스마스!"
+        ];
+
+        const bubble = document.createElement('div');
+        bubble.classList.add('speech-bubble');
+        bubble.textContent = replies[Math.floor(Math.random() * replies.length)];
+        
+        const rect = mainText.getBoundingClientRect();
+        bubble.style.left = (rect.left + rect.width / 2) + 'px';
+        bubble.style.top = (rect.top - 50) + 'px';
+        
+        // Slightly offset to center properly with transform
+        bubble.style.transform = 'translateX(-50%)'; 
+
+        document.body.appendChild(bubble);
+
+        // Auto remove
+        setTimeout(() => {
+            bubble.style.opacity = '0';
+            bubble.style.transition = 'opacity 0.5s';
+            setTimeout(() => bubble.remove(), 500);
+        }, 2000);
+    });
+}
+
+function setupEasterEggs() {
+    // 2. Keyboard "HEART" & "SNOW" Mode
+    let inputBuffer = '';
+    
+    window.addEventListener('keydown', (e) => {
+        inputBuffer += e.key.toLowerCase();
+        
+        if (inputBuffer.length > 10) {
+            inputBuffer = inputBuffer.slice(-10);
+        }
+
+        if (inputBuffer.endsWith('heart')) {
+            snowMode = 'heart';
+            console.log('Heart Mode Activated');
+        } else if (inputBuffer.endsWith('snow')) {
+            snowMode = 'snow';
+            console.log('Snow Mode Activated');
+        }
     });
 }
