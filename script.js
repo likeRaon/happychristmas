@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("Merry Christmas! Initializing...");
+    console.log("Merry Christmas! v3 Initializing..."); // 버전 확인용 로그
     initScene(); 
     decorateTree();
     setupInteractions();
@@ -44,8 +44,10 @@ function initScene() {
 
     // Keyboard Fireworks
     document.addEventListener('keydown', (e) => {
-        // Check if key is a single letter (a-z, A-Z)
-        if (/^[a-zA-Z]$/.test(e.key)) {
+        // 한글 입력 중일 때도 작동하도록 e.code 사용 (KeyA, KeyB...)
+        if (e.code.startsWith('Key')) {
+            const char = e.code.slice(3); // "KeyA" -> "A"
+            
             // Random position in the sky (top 70%)
             const x = Math.random() * (width - 100) + 50;
             const y = Math.random() * (height * 0.7) + 50;
@@ -56,7 +58,7 @@ function initScene() {
             createFirework(x, y, color);
             
             // Create Text
-            textFireworks.push(new TextFirework(x, y, e.key, color));
+            textFireworks.push(new TextFirework(x, y, char, color));
         }
     });
 
