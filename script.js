@@ -1,5 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("Merry Christmas! v4 Initializing..."); 
+    console.log("Merry Christmas! v5 Initializing..."); 
+    
+    // 강제로 윈도우에 포커스 주기
+    window.focus();
+    
+    // 혹시 모를 클릭 시 포커스 보장
+    document.body.addEventListener('click', () => {
+        window.focus();
+    });
+
     initScene(); 
     decorateTree();
     setupInteractions();
@@ -8,6 +17,154 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 let snowMode = 'snow'; // 'snow' | 'heart'
+
+// --- Classes (전역 스코프로 이동) ---
+class Snowflake {
+    constructor(width, height) {
+        // 너비와 높이를 인스턴스 변수로 저장하거나 reset에서 처리하도록 수정
+        // 하지만 여기서는 initScene에서 전역 width/height를 쓰지 못하므로
+        // 생성자에서 받거나, reset 호출 시 컨텍스트를 고려해야 함.
+        // 가장 안전한 방법: initScene 내부에서 width/height를 참조하는 것이 아니라
+        // 윈도우 객체나 캔버스 객체를 통해 최신 값을 가져오도록 함.
+        this.reset();
+    }
+
+    reset() {
+        this.x = Math.random() * window.innerWidth;
+        this.y = -10;
+        this.size = Math.floor(Math.random() * 3 + 2); 
+        this.size = this.size - (this.size % 2); 
+        if (this.size < 2) this.size = 2;
+        
+        this.speed = Math.random() * 1.5 + 0.5; 
+        this.velX = Math.random() * 1 - 0.5; 
+        this.opacity = Math.random() * 0.5 + 0.5;
+        this.resting = false; 
+    }
+
+    update(mouse, lastMouse) {
+        const stickHeight = 50;
+        const radius = 50; 
+        const umbrellaCenterY = mouse.y - stickHeight; 
+
+        if (this.resting) {
+            const mouseDist = Math.abs(mouse.x - lastMouse.x) + Math.abs(mouse.y - lastMouse.y);
+            if (mouseDist > 5) {
+                this.resting = false;
+                this.speed = Math.random() * 1.5 + 0.5;
+                return;
+            }
+
+            const dx = this.x - mouse.x;
+            const slideFactor = 0.05;
+            if (dx > 0) this.x += Math.abs(dx) * slideFactor;
+            else this.x -= Math.abs(dx) * slideFactor;
+
+            const newDx = this.x - mouse.x;
+            if (Math.abs(newDx) >= radius) {
+                this.resting = false;
+                this.speed = Math.random() * 1.5 + 0.5;
+            } else {
+                this.y = umbrellaCenterY - Math.sqrt(radius*radius - newDx*newDx);
+            }
+        } else {
+            this.y += this.speed;
+            this.x += this.velX;
+
+            const dx = this.x - mouse.x;
+            const dy = this.y - umbrellaCenterY;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+
+            if (dist < radius && this.y < umbrellaCenterY) {
+                this.resting = true;
+                this.y = umbrellaCenterY - Math.sqrt(radius*radius - dx*dx);
+                this.speed = 0;
+                this.velX = 0;
+            }
+        }
+        
+        if (this.y > window.innerHeight) {
+            this.reset();
+        }
+        if (this.x > window.innerWidth) this.x = 0;
+        if (this.x < 0) this.x = window.innerWidth;
+    }
+
+    draw(ctx) {
+        ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+        if (snowMode === 'heart') {
+            ctx.font = `${this.size * 3}px serif`; 
+            ctx.fillText('❤', this.x, this.y);
+        } else {
+            ctx.fillRect(Math.floor(this.x), Math.floor(this.y), this.size, this.size);
+        }
+    }
+}
+
+class Particle {
+    constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        const angle = Math.random() * Math.PI * 2;
+        const velocity = Math.random() * 4 + 1; 
+        this.dx = Math.cos(angle) * velocity;
+        this.dy = Math.sin(angle) * velocity;
+        this.life = 100;
+        this.decay = Math.random() * 0.03 + 0.015;
+        this.gravity = 0.1;
+    }
+
+    update() {
+        this.x += this.dx;
+        this.y += this.dy;
+        this.dy += this.gravity; 
+        this.life -= 2;
+        this.alpha = this.life / 100;
+    }
+
+    draw(ctx) {
+        ctx.save();
+        ctx.globalAlpha = this.alpha;
+        ctx.fillStyle = this.color;
+        ctx.fillRect(this.x, this.y, 4, 4);
+        ctx.restore();
+    }
+}
+
+class TextFirework {
+    constructor(x, y, text, color) {
+        this.x = x;
+        this.y = y;
+        this.text = text;
+        this.color = color;
+        this.life = 100;
+        this.alpha = 1;
+        this.size = 30; 
+    }
+
+    update() {
+        this.y -= 0.5; 
+        this.life -= 1.5;
+        this.alpha = Math.max(0, this.life / 100);
+        this.size += 0.5; 
+    }
+
+    draw(ctx) {
+        ctx.save();
+        ctx.globalAlpha = this.alpha;
+        ctx.fillStyle = '#fff'; 
+        ctx.font = `bold ${this.size}px monospace`; // 폰트 단순화
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = 20;
+        ctx.fillText(this.text, this.x, this.y);
+        ctx.fillText(this.text, this.x, this.y);
+        ctx.restore();
+    }
+}
 
 function initScene() {
     const canvas = document.getElementById('snowCanvas');
@@ -18,13 +175,12 @@ function initScene() {
     canvas.width = width;
     canvas.height = height;
 
-    // --- Snow System ---
+    // --- Systems ---
     const snowflakes = [];
     const maxSnowflakes = 1200; 
     
-    // --- Firework System ---
     let particles = [];
-    let textFireworks = []; // Store text particles
+    let textFireworks = []; 
 
     // Mouse tracking
     let mouse = { x: -100, y: -100 };
@@ -44,23 +200,26 @@ function initScene() {
 
     // Keyboard Fireworks
     window.addEventListener('keydown', (e) => {
-        // 디버깅용 로그: 어떤 키가 눌렸는지 확인
-        console.log('Keydown:', e.code, e.key);
+        // 디버깅 로그
+        console.log('Key Pressed:', e.code, e.key);
 
-        // 한글 입력 중일 때도 작동하도록 e.code 사용 (KeyA, KeyB...)
+        let char = '';
+        
+        // 1. e.code로 체크 (한글 입력 상태에서도 KeyA 등으로 잡힘)
         if (e.code.startsWith('Key')) {
-            const char = e.code.slice(3); // "KeyA" -> "A"
-            
-            // Random position in the sky (top 70%)
+            char = e.code.slice(3); // "KeyA" -> "A"
+        } 
+        // 2. e.key로 체크 (영문 입력 상태)
+        else if (/^[a-zA-Z]$/.test(e.key)) {
+            char = e.key.toUpperCase();
+        }
+
+        if (char) {
             const x = Math.random() * (width - 100) + 50;
             const y = Math.random() * (height * 0.7) + 50;
-            
             const color = `hsl(${Math.random() * 360}, 100%, 70%)`;
             
-            // Create Explosion
             createFirework(x, y, color);
-            
-            // Create Text
             textFireworks.push(new TextFirework(x, y, char, color));
         }
     });
@@ -73,7 +232,6 @@ function initScene() {
         }
     }
 
-    // Resize handler
     window.addEventListener('resize', () => {
         width = window.innerWidth;
         height = window.innerHeight;
@@ -81,168 +239,15 @@ function initScene() {
         canvas.height = height;
     });
 
-    // --- Classes ---
-
-    class Snowflake {
-        constructor() {
-            this.reset();
-            this.y = Math.random() * height;
-        }
-
-        reset() {
-            this.x = Math.random() * width;
-            this.y = -10;
-            this.size = Math.floor(Math.random() * 3 + 2); 
-            this.size = this.size - (this.size % 2); 
-            if (this.size < 2) this.size = 2;
-            
-            this.speed = Math.random() * 1.5 + 0.5; 
-            this.velX = Math.random() * 1 - 0.5; 
-            this.opacity = Math.random() * 0.5 + 0.5;
-            
-            this.resting = false; 
-        }
-
-        update() {
-            const stickHeight = 50;
-            const radius = 50; 
-            const umbrellaCenterY = mouse.y - stickHeight; 
-
-            if (this.resting) {
-                const mouseDist = Math.abs(mouse.x - lastMouse.x) + Math.abs(mouse.y - lastMouse.y);
-                if (mouseDist > 5) {
-                    this.resting = false;
-                    this.speed = Math.random() * 1.5 + 0.5;
-                    return;
-                }
-
-                const dx = this.x - mouse.x;
-                
-                const slideFactor = 0.05;
-                if (dx > 0) this.x += Math.abs(dx) * slideFactor;
-                else this.x -= Math.abs(dx) * slideFactor;
-
-                const newDx = this.x - mouse.x;
-                
-                if (Math.abs(newDx) >= radius) {
-                    this.resting = false;
-                    this.speed = Math.random() * 1.5 + 0.5;
-                } else {
-                    this.y = umbrellaCenterY - Math.sqrt(radius*radius - newDx*newDx);
-                }
-            } else {
-                this.y += this.speed;
-                this.x += this.velX;
-
-                const dx = this.x - mouse.x;
-                const dy = this.y - umbrellaCenterY;
-                const dist = Math.sqrt(dx*dx + dy*dy);
-
-                if (dist < radius && this.y < umbrellaCenterY) {
-                    this.resting = true;
-                    this.y = umbrellaCenterY - Math.sqrt(radius*radius - dx*dx);
-                    this.speed = 0;
-                    this.velX = 0;
-                }
-            }
-            
-            if (this.y > height) {
-                this.reset();
-            }
-            if (this.x > width) this.x = 0;
-            if (this.x < 0) this.x = width;
-        }
-
-        draw() {
-            ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
-            
-            if (snowMode === 'heart') {
-                ctx.font = `${this.size * 3}px serif`; 
-                ctx.fillText('❤', this.x, this.y);
-            } else {
-                ctx.fillRect(Math.floor(this.x), Math.floor(this.y), this.size, this.size);
-            }
-        }
-    }
-
-    class Particle {
-        constructor(x, y, color) {
-            this.x = x;
-            this.y = y;
-            this.color = color;
-            const angle = Math.random() * Math.PI * 2;
-            const velocity = Math.random() * 4 + 1; 
-            this.dx = Math.cos(angle) * velocity;
-            this.dy = Math.sin(angle) * velocity;
-            this.life = 100;
-            this.decay = Math.random() * 0.03 + 0.015;
-            this.gravity = 0.1;
-        }
-
-        update() {
-            this.x += this.dx;
-            this.y += this.dy;
-            this.dy += this.gravity; 
-            this.life -= 2;
-            this.alpha = this.life / 100;
-        }
-
-        draw() {
-            ctx.save();
-            ctx.globalAlpha = this.alpha;
-            ctx.fillStyle = this.color;
-            ctx.fillRect(this.x, this.y, 4, 4);
-            ctx.restore();
-        }
-    }
-
-    class TextFirework {
-        constructor(x, y, text, color) {
-            this.x = x;
-            this.y = y;
-            this.text = text;
-            this.color = color;
-            this.life = 100;
-            this.alpha = 1;
-            this.size = 30; // Initial size
-        }
-
-        update() {
-            this.y -= 0.5; // Slowly float up
-            this.life -= 1.5;
-            this.alpha = Math.max(0, this.life / 100);
-            this.size += 0.5; // Grow
-        }
-
-        draw() {
-            ctx.save();
-            ctx.globalAlpha = this.alpha;
-            ctx.fillStyle = '#fff'; // White center
-            ctx.font = `${this.size}px 'Press Start 2P', sans-serif`; // Fallback font added
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            
-            // Glow effect with the main color
-            ctx.shadowColor = this.color;
-            ctx.shadowBlur = 20;
-            ctx.fillText(this.text, this.x, this.y);
-            
-            // Draw again to make it brighter
-            ctx.fillText(this.text, this.x, this.y);
-            ctx.restore();
-        }
-    }
-
     // Initialize Snowflakes
     for (let i = 0; i < maxSnowflakes; i++) {
         snowflakes.push(new Snowflake());
     }
 
-    // --- Animation Loop ---
     function animate() {
         ctx.clearRect(0, 0, width, height);
         
-        // 1. Draw Umbrella
+        // Umbrella
         if (mouse.x > -50) { 
             const stickHeight = 50;
             const radius = 50;
@@ -259,32 +264,23 @@ function initScene() {
             ctx.arc(mouse.x, umbrellaCenterY, radius, Math.PI, 2 * Math.PI);
             ctx.fillStyle = '#e74c3c';
             ctx.fill();
-            
-            ctx.lineWidth = 1;
         }
 
-        // 2. Update & Draw Snow
         snowflakes.forEach(flake => {
-            flake.update();
-            flake.draw();
+            flake.update(mouse, lastMouse);
+            flake.draw(ctx);
         });
 
-        // 3. Update & Draw Fireworks
         for (let i = particles.length - 1; i >= 0; i--) {
             particles[i].update();
-            particles[i].draw();
-            if (particles[i].life <= 0) {
-                particles.splice(i, 1);
-            }
+            particles[i].draw(ctx);
+            if (particles[i].life <= 0) particles.splice(i, 1);
         }
 
-        // 4. Update & Draw Text Fireworks
         for (let i = textFireworks.length - 1; i >= 0; i--) {
             textFireworks[i].update();
-            textFireworks[i].draw();
-            if (textFireworks[i].life <= 0) {
-                textFireworks.splice(i, 1);
-            }
+            textFireworks[i].draw(ctx);
+            if (textFireworks[i].life <= 0) textFireworks.splice(i, 1);
         }
 
         requestAnimationFrame(animate);
@@ -303,10 +299,10 @@ function setupParallax() {
         const x = (window.innerWidth / 2 - e.clientX) / 50;
         const y = (window.innerHeight / 2 - e.clientY) / 50;
 
-        scene.style.transform = `translateX(${x}px) translateY(${y}px)`;
-        moon.style.transform = `translateX(${x * 0.5}px) translateY(${y * 0.5}px) scale(1.05)`; 
-        santa.style.transform = `translateX(${-x * 2}px) translateY(${-y * 2}px) scale(0.8)`;
-        text.style.transform = `translateX(${x * 1.5}px) translateY(${y * 1.5}px)`;
+        if(scene) scene.style.transform = `translateX(${x}px) translateY(${y}px)`;
+        if(moon) moon.style.transform = `translateX(${x * 0.5}px) translateY(${y * 0.5}px) scale(1.05)`; 
+        if(santa) santa.style.transform = `translateX(${-x * 2}px) translateY(${-y * 2}px) scale(0.8)`;
+        if(text) text.style.transform = `translateX(${x * 1.5}px) translateY(${y * 1.5}px)`;
     });
 }
 
@@ -316,18 +312,15 @@ function decorateTree() {
 
     layers.forEach(layer => {
         const numLights = Math.floor(Math.random() * 4) + 5; 
-
         for (let i = 0; i < numLights; i++) {
             const light = document.createElement('div');
             light.classList.add('light');
-            
             const color = colors[Math.floor(Math.random() * colors.length)];
             light.style.backgroundColor = color;
             light.style.color = color;
             
             const layerWidth = layer.offsetWidth;
             const layerHeight = layer.offsetHeight;
-            
             const x = Math.random() * (layerWidth - 12) + 4;
             const y = Math.random() * (layerHeight - 12) + 4;
             
@@ -343,7 +336,6 @@ function decorateTree() {
                 direction: 'alternate',
                 delay: Math.random() * 1000
             });
-            
             layer.appendChild(light);
         }
     });
@@ -362,7 +354,6 @@ function setupInteractions() {
         e.stopPropagation(); 
         const lights = document.querySelectorAll('.light');
         const colors = ['#ff0000', '#ffff00', '#00ffff', '#ff00ff', '#ffffff', '#ff9900', '#00ff00'];
-        
         lights.forEach(light => {
             const newColor = colors[Math.floor(Math.random() * colors.length)];
             light.style.backgroundColor = newColor;
@@ -404,26 +395,19 @@ function setupInteractions() {
         e.stopPropagation();
         const gift = document.createElement('div');
         gift.classList.add('falling-gift');
-        
         const rect = santaContainer.getBoundingClientRect();
-        
         gift.style.left = (rect.left + rect.width / 2) + 'px';
         gift.style.top = (rect.top + rect.height / 2) + 'px';
-        
         document.body.appendChild(gift);
-        
         gift.addEventListener('animationend', () => {
             gift.remove();
         });
     });
 
-    // 1. Presents Surprise
     const gifts = ['🧸', '🎮', '🍬', '📱', '💍', '🧦', '💵', '🍕'];
     presents.forEach(present => {
         present.addEventListener('click', (e) => {
             e.stopPropagation(); 
-            
-            // Shake effect
             present.animate([
                 { transform: 'rotate(0)' },
                 { transform: 'rotate(-5deg)' },
@@ -431,26 +415,19 @@ function setupInteractions() {
                 { transform: 'rotate(0)' }
             ], { duration: 300 });
 
-            // Pop emoji
             const emoji = document.createElement('div');
             emoji.classList.add('emoji-pop');
             emoji.textContent = gifts[Math.floor(Math.random() * gifts.length)];
-            
-            // Position above present
             const rect = present.getBoundingClientRect();
             emoji.style.left = (rect.left + rect.width/2 - 10) + 'px';
             emoji.style.top = rect.top + 'px';
-            
             document.body.appendChild(emoji);
-            
             emoji.addEventListener('animationend', () => emoji.remove());
         });
     });
 
-    // 3. Text Interaction (Santa's Reply)
     mainText.addEventListener('click', (e) => {
         e.stopPropagation();
-        // Remove existing bubble if any
         const existingBubble = document.querySelector('.speech-bubble');
         if (existingBubble) existingBubble.remove();
 
@@ -465,17 +442,12 @@ function setupInteractions() {
         const bubble = document.createElement('div');
         bubble.classList.add('speech-bubble');
         bubble.textContent = replies[Math.floor(Math.random() * replies.length)];
-        
         const rect = mainText.getBoundingClientRect();
         bubble.style.left = (rect.left + rect.width / 2) + 'px';
         bubble.style.top = (rect.top - 50) + 'px';
-        
-        // Slightly offset to center properly with transform
         bubble.style.transform = 'translateX(-50%)'; 
 
         document.body.appendChild(bubble);
-
-        // Auto remove
         setTimeout(() => {
             bubble.style.opacity = '0';
             bubble.style.transition = 'opacity 0.5s';
@@ -485,12 +457,10 @@ function setupInteractions() {
 }
 
 function setupEasterEggs() {
-    // 2. Keyboard "HEART" & "SNOW" Mode
     let inputBuffer = '';
-    
     window.addEventListener('keydown', (e) => {
-        inputBuffer += e.key.toLowerCase();
-        
+        let char = e.key.toLowerCase();
+        inputBuffer += char;
         if (inputBuffer.length > 10) {
             inputBuffer = inputBuffer.slice(-10);
         }
